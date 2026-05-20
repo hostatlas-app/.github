@@ -28,16 +28,13 @@ Marketing site + product details at
 ## Public repositories here
 
 Most of HostAtlas itself is closed-source, but a few integration pieces
-live in the open:
+live in the open. This list refreshes automatically from the GitHub API:
 
-- [**mcp-server**](https://github.com/hostatlas-app/mcp-server) — MCP
-  gateway giving AI agents live read + safe write access to your
-  HostAtlas fleet. 22 tools, 3 resources.
-- [**queue-monitor**](https://github.com/hostatlas-app/queue-monitor) —
-  Push Redis / Database / SQS queue metrics into your HostAtlas
-  dashboard.
-- [**homebrew-hostatlas**](https://github.com/hostatlas-app/homebrew-hostatlas) —
-  Homebrew tap for the HostAtlas CLI.
+<!-- REPO_LIST_START -->
+- [**homebrew-hostatlas**](https://github.com/hostatlas-app/homebrew-hostatlas) — Homebrew tap for HostAtlas CLI — infrastructure monitoring from your terminal
+- [**mcp-server**](https://github.com/hostatlas-app/mcp-server) — MCP server for HostAtlas infrastructure monitoring. 22 tools for managing servers, alerts, incidents, domains, backups, and attack mode. 3 resources for real-time context. Works with Claude Code, Cursor, Windsurf. Auto-config from CLI login
+- [**queue-monitor**](https://github.com/hostatlas-app/queue-monitor) — Laravel package to push queue metrics (Redis, Database, SQS) to HostAtlas. Auto-detects queues, tracks size, failed jobs, processing count, and workers. Supports Laravel, BullMQ, Sidekiq, and Celery. One command: php artisan hostatlas:queue-metrics.
+<!-- REPO_LIST_END -->
 
 ## Free open-source tools
 

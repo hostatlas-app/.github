@@ -1,0 +1,83 @@
+name: Refresh README repo list
+
+on:
+  schedule:
+    - cron: '0 6 * * *'        # daily at 06:00 UTC
+  push:
+    branches: [main]
+    paths:
+      - 'profile/README.md'
+      - '.github/workflows/refresh-readme.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch + format public repo list
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ORG="${{ github.repository_owner }}"
+
+          # Fetch public, non-fork, non-archived repos (excluding .github meta repo).
+          gh api "orgs/$ORG/repos?type=public&per_page=100" \
+            --jq '.[]
+              | select(.fork == false and .archived == false and .name != ".github")
+              | "- [**\(.name)**](\(.html_url)) — \(.description // "(no description)")"' \
+            | sort > /tmp/repo_list.md
+
+          if [ ! -s /tmp/repo_list.md ]; then
+            echo "(no public repos to list)"
+            echo "_(No public repositories yet.)_" > /tmp/repo_list.md
+          fi
+
+          echo "=== Generated repo list ==="
+          cat /tmp/repo_list.md
+
+      - name: Replace block in README
+        run: |
+          python3 <<'PY'
+          import re
+          import sys
+
+          with open('profile/README.md', 'r') as f:
+              content = f.read()
+
+          with open('/tmp/repo_list.md', 'r') as f:
+              repo_list = f.read().rstrip()
+
+          pattern = r'(<!-- REPO_LIST_START -->\n)(.*?)(\n<!-- REPO_LIST_END -->)'
+          if not re.search(pattern, content, flags=re.DOTALL):
+              print("ERROR: REPO_LIST_START/END markers not found in profile/README.md", file=sys.stderr)
+              sys.exit(1)
+
+          new = re.sub(pattern, lambda m: m.group(1) + repo_list + m.group(3), content, flags=re.DOTALL)
+
+          if new == content:
+              print("No changes to README — content unchanged.")
+          else:
+              with open('profile/README.md', 'w') as f:
+                  f.write(new)
+              print("README updated.")
+          PY
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet profile/README.md; then
+            echo "No diff — skipping commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add profile/README.md
+          git commit -m "chore: refresh public repo list from GitHub API"
+          git push
+          echo "README refresh committed + pushed."
